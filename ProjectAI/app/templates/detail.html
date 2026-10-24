@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Детали прогона #{{ run.id }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        .success { color: green; font-weight: bold; }
+        .failed { color: red; font-weight: bold; }
+        pre { background: #f4f4f4; padding: 10px; }
+    </style>
+</head>
+<body>
+    <a href="/">← Назад к списку</a>
+    <h1>Детали прогона #{{ run.id }}</h1>
+    <p><strong>Статус:</strong> <span class="{{ run.status }}">{{ run.status }}</span></p>
+    <p><strong>Метрика (Accuracy):</strong> {{ run.metric_value }}</p>
+    
+    <h2>Шаги пайплайна</h2>
+    <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;">
+        <tr><th>Шаг</th><th>Статус</th><th>Начало</th><th>Артефакт</th><th>Ошибка</th></tr>
+        {% for item in steps %}
+        <tr>
+            <td>{{ item.code }}</td>
+            <td class="{{ item.step.status }}">{{ item.step.status }}</td>
+            <td>{{ item.step.started_at.strftime('%H:%M:%S') if item.step.started_at else '-' }}</td>
+            <td>{{ item.step.output_path or '-' }}</td>
+            <td style="color: red;">{{ item.step.error_text or '-' }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
