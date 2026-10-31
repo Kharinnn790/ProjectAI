@@ -11,20 +11,22 @@ class EDAAgent(BaseAgent):
     def run(self, context: dict) -> dict:
         try:
             os.makedirs(self.output_dir, exist_ok=True)
-            
-            # Берем путь к данным из контекста (его передаст предыдущий агент)
             data_path = context.get("data_path")
-            if not data_path or not os.path.exists(data_path):
-                raise FileNotFoundError("Датасет не найден")
-
+            
             df = pd.read_csv(data_path)
             
-            # Собираем профиль
+            # Умный анализ: определяем типы колонок
+            cat_cols = df.select_dtypes(include=['object']).columns.tolist()
+            num_cols = df.select_dtypes(include=['number']).columns.tolist()
+            
             profile = {
                 "rows": len(df),
                 "columns": len(df.columns),
                 "missing_values": df.isnull().sum().to_dict(),
-                "dtypes": df.dtypes.astype(str).to_dict()
+                "categorical_columns": cat_cols,
+                "numeric_columns": num_cols,
+                # Пример умного решения: для каждой категориальной колонки считаем уникальные значения
+                "categorical_cardinality": {col: int(df[col].nunique()) for col in cat_cols}
             }
             
             with open(self.output_path, "w", encoding="utf-8") as f:
@@ -35,7 +37,4 @@ class EDAAgent(BaseAgent):
                 "output_path": self.output_path
             }
         except Exception as e:
-            return {
-                "status": "failed",
-                "error": str(e)
-            }
+            return {"status": "failed", "error": str(e)}

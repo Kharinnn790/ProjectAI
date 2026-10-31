@@ -16,11 +16,13 @@ class BaselineAgent(BaseAgent):
             os.makedirs(self.output_dir, exist_ok=True)
             data_path = context.get("data_path")
             print(f"  [Baseline] Читаю данные из: {data_path}")
-            
-            # Явно указываем кодировку и разделитель
+                      
             df = pd.read_csv(data_path, sep=",", encoding="utf-8")
             
-            # Простейший препроцессинг
+            # Умный выбор признаков (записываем в контекст)
+            selected_features = ['Pclass', 'Sex']
+            context["decision_features"] = selected_features
+
             df = df[['Survived', 'Pclass', 'Sex']].dropna()
             df['Sex'] = df['Sex'].map({'male': 0, 'female': 1})
             

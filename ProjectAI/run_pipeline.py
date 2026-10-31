@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from sqlmodel import Session, select
 from app.database import engine
-from app.models import Dataset, PipelineStep, Run, RunStep, Blocker
+from app.models import Dataset, PipelineStep, Run, RunStep, Blocker, AgentDecision
 from agents.collect import CollectAgent
 from agents.eda import EDAAgent
 from agents.baseline import BaselineAgent
@@ -91,6 +91,16 @@ def execute_pipeline():
                 run.metric_value = result.get("metric_value")
                 print(f"Метрика: {run.metric_name} = {run.metric_value:.4f}")
 
+            if result["status"] == "success" and "decision_features" in context:
+                decision = AgentDecision(
+                    run_id=run.id,
+                    step_id=step_db.id,
+                    decision=f"Выбраны признаки: {context['decision_features']}",
+                    reasoning="Выбраны базовые признаки для baseline модели."
+                )
+                session.add(decision)
+                context.pop("decision_features") # Очищаем контекст
+
         # 6. Финализируем прогон
         run.finished_at = datetime.now(timezone.utc)
         if run.status != "failed":
@@ -100,5 +110,4 @@ def execute_pipeline():
         session.add(run)
         session.commit()
 
-if __name__ == "__main__":
-    execute_pipeline()
+execute_pipeline()
