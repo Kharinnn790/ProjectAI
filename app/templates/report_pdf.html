@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; color: #333; }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #2980b9; margin-top: 30px; }
+        .header-info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #3498db; color: white; }
+        .success { color: #27ae60; font-weight: bold; }
+        .failed { color: #e74c3c; font-weight: bold; }
+        .footer { margin-top: 50px; font-size: 12px; color: #7f8c8d; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Отчет о прогоне пайплайна #{{ run.id }}</h1>
+    
+    <div class="header-info">
+        <p><strong>Датасет:</strong> {{ dataset_name }}</p>
+        <p><strong>Дата запуска:</strong> {{ run.started_at.strftime('%Y-%m-%d %H:%M:%S') if run.started_at else '-' }}</p>
+        <p><strong>Статус:</strong> <span class="{{ run.status }}">{{ run.status }}</span></p>
+        <p><strong>Метрика (Accuracy):</strong> {{ run.metric_value | round(4) if run.metric_value else '-' }}</p>
+        <p><strong>Время человека (мин):</strong> {{ run.human_minutes }}</p>
+    </div>
+
+    <h2>Детали шагов</h2>
+    <table>
+        <tr>
+            <th>Шаг</th>
+            <th>Статус</th>
+            <th>Начало</th>
+            <th>Артефакт</th>
+        </tr>
+        {% for item in steps %}
+        <tr>
+            <td>{{ item.code }}</td>
+            <td class="{{ item.step.status }}">{{ item.step.status }}</td>
+            <td>{{ item.step.started_at.strftime('%H:%M:%S') if item.step.started_at else '-' }}</td>
+            <td>{{ item.step.output_path or '-' }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="footer">
+        Сгенерировано автоматически системой Zero-Touch AI Pipeline.
+    </div>
+</body>
+</html>
