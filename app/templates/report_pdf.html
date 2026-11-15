@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="utf-8">
     <style>
@@ -26,6 +26,11 @@
         <p><strong>Время человека (мин):</strong> {{ run.human_minutes }}</p>
     </div>
 
+    {% if img_base64 %}
+    <h2>Важность признаков</h2>
+    <img src="data:image/png;base64,{{ img_base64 }}" style="width: 100%; max-width: 600px; margin-bottom: 20px;">
+    {% endif %}
+    
     <h2>Детали шагов</h2>
     <table>
         <tr>

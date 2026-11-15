@@ -1,5 +1,10 @@
 import os
 import json
+import io
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import base64
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score, StratifiedKFold
@@ -60,9 +65,27 @@ class BaselineAgent(BaseAgent):
             grid_search.fit(X, y)
             
             best_model = grid_search.best_estimator_
+
+             # --- Генерация графика важности признаков ---
+            importances = best_model.feature_importances_
             
+            plt.figure(figsize=(8, 5))
+            plt.barh(selected_features, importances, color='#3498db')
+            plt.xlabel('Важность')
+            plt.title('Важность признаков (RandomForest)')
+            plt.tight_layout()
+            
+            # Сохраняем картинку
+            img_path = "app/static/feature_importance.png"
+            os.makedirs("app/static", exist_ok=True)
+            
+            # ВАЖНО: facecolor='white' делает фон непрозрачным, а bbox_inches='tight' убирает лишние поля
+            plt.savefig(img_path, format='png', dpi=150, facecolor='white', bbox_inches='tight')
+            plt.close()
+            
+            context["feature_importance_path"] = img_path
+
             # 4. Честная оценка на тех же фолдах через cross_val_score
-            # (Это дает среднее и отклонение, как просил преподаватель)
             cv_scores = cross_val_score(best_model, X, y, cv=cv_strategy, scoring='accuracy')
             
             mean_accuracy = float(cv_scores.mean())
@@ -82,7 +105,7 @@ class BaselineAgent(BaseAgent):
             print(f"  [Baseline] Средняя accuracy (5-fold): {mean_accuracy:.4f} ± {std_accuracy:.4f}")
             print(f"  [Baseline] Лучшие параметры: {grid_search.best_params_}")
             
-            # Возвращаем в контекст данные для записи в БД
+            # Возвращаем в контекст данные для записи в БДшке
             context["baseline_metrics"] = metrics
             
             return {
