@@ -1,6 +1,6 @@
 import os
-import json
 from datetime import datetime
+from openai import OpenAI
 from .base import BaseAgent
 
 class ReportAgent(BaseAgent):
@@ -11,10 +11,8 @@ class ReportAgent(BaseAgent):
         try:
             os.makedirs(self.output_dir, exist_ok=True)
             
-            # 1. Берем данные из контекста
+            # 1. Берем данные из контекста (переданы из baseline.py)
             metrics = context.get("baseline_metrics", {})
-            
-            # Извлекаем именно accuracy_mean, которое передал новый baseline
             accuracy_mean = metrics.get("accuracy_mean")
             accuracy_std = metrics.get("accuracy_std", 0.0)
             best_params = metrics.get("best_params", {})
@@ -22,7 +20,7 @@ class ReportAgent(BaseAgent):
             if accuracy_mean is None:
                 raise ValueError("Не найдены метрики (accuracy_mean) для отчета")
 
-            # 2. Формируем промпт для LLM
+            # 2. Формируем промпт
             prompt = (
                 f"Ты — ассистент по анализу данных. Напиши краткий вывод (2-3 предложения) "
                 f"по результатам исследования датасета Titanic. "
@@ -31,17 +29,30 @@ class ReportAgent(BaseAgent):
                 f"Сделай акцент на том, что это хороший, стабильный результат."
             )
             
-            # 3. Имитация вызова LLM (так как нет реального API)
-            # В реальности здесь был бы вызов YandexGPT или OpenAI
-            # Мы имитируем ответ, чтобы код работал и можно было протестировать
-            llm_response = (
-                f"Модель RandomForest с параметрами {best_params} показала стабильный результат "
-                f"с accuracy {accuracy_mean:.4f}. Стандартное отклонение {accuracy_std:.4f} "
-                f"говорит о низком разбросе, что подтверждает надежность модели. "
-                f"Это отличный baseline для дальнейшего улучшения."
+            # 3. Вызов реального API (OpenRouter)
+            API_KEY = "pza_8bYobsKEcBXS-Wi80OjEK9CPLAYxKMLi" 
+            
+            client = OpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=API_KEY,
             )
             
-            # 4. Сохраняем промпт и ответ в контекст для записи в agent_decisions
+            print("  [Report] Отправка запроса к LLM (OpenRouter)...")
+            
+            try:
+                completion = client.chat.completions.create(
+                    # Бесплатная модель
+                    model="meta-llama/llama-3.1-8b-instruct:free", 
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.3,
+                )
+                llm_response = completion.choices[0].message.content
+                print("  [Report] Ответ от LLM успешно получен!")
+            except Exception as api_error:
+                print(f"  [Report] Ошибка API: {api_error}")
+                llm_response = f"Не удалось получить ответ от LLM. Ошибка: {api_error}"
+            
+            # 4. Сохраняем промпт и ответ в контекст (для записи в agent_decisions)
             context["llm_decision"] = {
                 "prompt": prompt,
                 "response": llm_response

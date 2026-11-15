@@ -83,6 +83,10 @@ def execute_pipeline():
                 context["eda_profile_path"] = result["output_path"]
             elif step_code == "baseline":
                 context["baseline_metrics_path"] = result["output_path"]
+                # Передаем картинку дальше
+                if "feature_importance_img" in context:
+                    # Оставляем в контексте, она сама дойдет до эндпоинта PDF
+                    pass 
                 
                 # Сохраняем метрику в Run (среднее)
                 run.metric_name = result.get("metric_name")
